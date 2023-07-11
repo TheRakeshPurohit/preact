@@ -14,15 +14,20 @@ import { setupRerender, act } from 'preact/test-utils';
 describe('Portal', () => {
 	/** @type {HTMLDivElement} */
 	let scratch;
+	/** @type {HTMLDivElement} */
+	let scratch2;
+
 	let rerender;
 
 	beforeEach(() => {
 		scratch = setupScratch();
+		scratch2 = setupScratch('scratch-2');
 		rerender = setupRerender();
 	});
 
 	afterEach(() => {
 		teardown(scratch);
+		teardown(scratch2);
 	});
 
 	it('should render into a different root node', () => {
@@ -663,6 +668,29 @@ describe('Portal', () => {
 		expect(calls).to.deep.equal(['Button 1', 'Button 2', 'Modal', 'App']);
 	});
 
+	it('should include containerInfo', () => {
+		let root = document.createElement('div');
+		document.body.appendChild(root);
+
+		const A = () => <span>A</span>;
+
+		let portal;
+		function Foo(props) {
+			portal = createPortal(props.children, root);
+			return <div>{portal}</div>;
+		}
+		render(
+			<Foo>
+				<A />
+			</Foo>,
+			scratch
+		);
+
+		expect(portal.containerInfo).to.equal(root);
+
+		root.parentNode.removeChild(root);
+	});
+
 	it('should order complex effects well', () => {
 		const calls = [];
 		const Parent = ({ children, isPortal }) => {
@@ -690,7 +718,7 @@ describe('Portal', () => {
 				calls.push('Portal');
 			}, []);
 
-			return createPortal(<Parent isPortal>{content}</Parent>, document.body);
+			return createPortal(<Parent isPortal>{content}</Parent>, scratch2);
 		};
 
 		const App = () => {
